@@ -1,0 +1,68 @@
+
+const KEY='elkhorn_academy_v2';
+const conflict=[
+['Understanding Workplace Conflict','videos/conflict-1.mp4',['Recognize common workplace conflict triggers','Understand constructive and destructive conflict','Identify the manager’s responsibility']],
+['Active Listening','videos/conflict-2.mp4',['Listen without interrupting','Use clarification and paraphrasing','Separate facts from assumptions']],
+['Difficult Conversations','videos/conflict-3.mp4',['Prepare before the conversation','Use clear and respectful language','Agree on specific next steps']],
+['De-escalation Skills','videos/conflict-4.mp4',['Remain calm and neutral','Reduce emotional intensity','Know when to pause or escalate']],
+['Mediation Between Employees','videos/conflict-5.mp4',['Establish fair ground rules','Help both employees explain concerns','Document agreements']],
+['Conflict Resolution: 5 Strategies','videos/conflict-6.mp4',['Apply appropriate resolution strategies','Focus on interests rather than positions','Choose solutions that support operations']],
+['Resolving Workplace Conflict','videos/conflict-7.mp4',['Follow up after resolution','Document appropriately','Prevent repeated conflict']]
+];
+const orientation=[
+['Welcome to Elkhorn Resort',['Resort facilities and departments','Leadership and communication contacts','First-week expectations']],
+['Resort Standards & Culture',['Professional appearance and conduct','Teamwork across departments','Respectful communication']],
+['Guest Service Expectations',['Welcoming guests','Service recovery basics','Privacy and confidentiality']],
+['Workplace Safety',['Emergency exits and assembly areas','Incident and hazard reporting','WHMIS and PPE requirements']],
+['Policies & Conduct',['Attendance and scheduling','Respectful workplace policies','Confidentiality and social media']],
+['Department Orientation',['Work area tour','Role responsibilities','Systems and equipment','Manager sign-off']],
+['Required Documents',['Complete the onboarding document checklist below']]
+];
+function state(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){} return {user:null,done:{},docs:{},certs:[]}}
+function save(s){localStorage.setItem(KEY,JSON.stringify(s))}
+let S=state(), currentCourse=null,currentModule=0;
+function signIn(){
+ const nameEl=document.getElementById('name');
+ const roleEl=document.getElementById('role');
+ S.user={name:(nameEl&&nameEl.value)||'Elkhorn Employee',role:(roleEl&&roleEl.value)||'Employee'};
+ save(S);
+ boot();
+}
+function logout(){S.user=null;save(S);location.reload()}
+function boot(){
+ if(!S.user)return;
+ const loginSection=document.getElementById('login');
+ const appSection=document.getElementById('app');
+ if(loginSection)loginSection.classList.add('hidden');
+ if(appSection)appSection.classList.remove('hidden');
+ document.getElementById('topName').textContent=S.user.name;
+ document.getElementById('topRole').textContent=S.user.role;
+ document.getElementById('welcome').textContent='Welcome, '+S.user.name;
+ document.querySelectorAll('.manager-only').forEach(x=>x.classList.toggle('hidden',S.user.role!=='Manager'));
+ renderCards();
+ updateAll();
+}
+function showPage(id,btn){document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');if(id==='certificates')renderCertificates();if(id==='manager')updateManager()}
+function completedCount(id){return (S.done[id]||[]).length}
+function isComplete(c){return completedCount(c.id)>=c.modules}
+function percent(c){return Math.min(100,Math.round(completedCount(c.id)/c.modules*100))}
+function card(c){let done=isComplete(c);return `<div class="card course-card"><span class="tag ${done?'done':''}">${done?'Completed':'Not Started'}</span><h3>${c.title}</h3><p>${c.description}</p><div class="progress"><div style="width:${percent(c)}%"></div></div><small>${completedCount(c.id)} of ${c.modules} modules completed · ${percent(c)}%</small><button class="btn primary" onclick="openCourse('${c.id}')">${done?'Review Course':'Start Course'}</button></div>`}
+function renderCards(){document.getElementById('dashboardCourses').innerHTML=COURSES.map(card).join('');document.getElementById('courseGrid').innerHTML=COURSES.map(card).join('')}
+function openCourse(id){currentCourse=COURSES.find(c=>c.id===id);currentModule=0;showPage('courseView');renderCourse()}
+function renderCourse(){let c=currentCourse;if(c.id==='conflict')renderStructured(conflict,true);else if(c.id==='orientation')renderStructured(orientation,false);else renderPlaceholder(c)}
+function renderStructured(mods,video){let buttons=mods.map((m,i)=>`<button class="${i===currentModule?'active':''}" onclick="currentModule=${i};renderCourse()">${i+1}. ${m[0]} ${(S.done[currentCourse.id]||[]).includes(i)?'✓':''}</button>`).join('');
+let m=mods[currentModule], content=video?`<video controls src="${m[1]}"></video><ul>${m[2].map(x=>'<li>'+x+'</li>').join('')}</ul>`:`<ul>${m[1].map(x=>'<li>'+x+'</li>').join('')}</ul>`;
+if(currentCourse.id==='orientation'&&currentModule===6)content+=docChecklist();
+document.getElementById('courseView').innerHTML=`<button class="btn secondary no-print" onclick="showPage('courses')">Back to Courses</button><h1>${currentCourse.title}</h1><div class="course-layout"><div class="module-list">${buttons}</div><div class="lesson"><h2>${m[0]}</h2>${content}<button class="btn primary" onclick="completeModule(${currentModule})">Mark Module Complete</button>${currentModule===mods.length-1?'<button class="btn gold" onclick="finishCourse()">Complete Course</button>':''}</div></div>`}
+function docChecklist(){let items=['Employee information form','SIN documentation','Work authorization, where applicable','Federal TD1','Manitoba TD1','Direct deposit information','Emergency contact','Employee handbook acknowledgement','Workplace policy acknowledgement','WHMIS training/certificate','Food Handler certificate, where required','Responsible alcohol service, where required','Role-specific licences or certificates'];return `<div class="check">${items.map((x,i)=>`<label><input type="checkbox" ${S.docs[i]?'checked':''} onchange="S.docs[${i}]=this.checked;save(S);updateAll()"> ${x}</label>`).join('')}</div>`}
+function completeModule(i){S.done[currentCourse.id]=S.done[currentCourse.id]||[];if(!S.done[currentCourse.id].includes(i))S.done[currentCourse.id].push(i);save(S);renderCourse();renderCards();updateAll()}
+function finishCourse(){if(completedCount(currentCourse.id)<currentCourse.modules)return alert('Please complete every module first.');if(!S.certs.find(x=>x.course===currentCourse.title))S.certs.push({course:currentCourse.title,date:new Date().toLocaleDateString(),id:'ELK-'+Date.now().toString().slice(-8)});save(S);alert('Course completed. Your certificate is available.');renderCards();updateAll()}
+function renderPlaceholder(c){document.getElementById('courseView').innerHTML=`<button class="btn secondary" onclick="showPage('courses')">Back to Courses</button><div class="lesson"><span class="tag">Course Framework</span><h1>${c.title}</h1><p>${c.description}</p><p>This course shell is ready for approved Elkhorn Resort training content, videos and assessment questions.</p><button class="btn primary" onclick="S.done['${c.id}']=[0,1,2,3].slice(0,${c.modules});save(S);finishCourse();renderCards()">Record Completion</button></div>`}
+function renderCertificates(){if(!S.certs.length){document.getElementById('certificateList').innerHTML='<div class="card">No certificates issued yet.</div>';return}document.getElementById('certificateList').innerHTML=S.certs.map((x,i)=>`<div class="cert"><img class="logo" src="assets/elkhorn-logo.png"><h1>Certificate of Completion</h1><p>This certifies that</p><h2>${S.user.name}</h2><p>has successfully completed</p><h2>${x.course}</h2><p>Completed ${x.date} · Certificate ID ${x.id}</p><div style="margin-top:42px;font-family:cursive;font-size:25px">Chris Phillips</div><b>Chris Phillips, General Manager</b><br><button class="btn primary no-print" onclick="window.print()">Print Certificate</button></div>`).join('<br>')}
+function updateAll(){let comp=COURSES.filter(isComplete).length, total=Math.round(COURSES.reduce((a,c)=>a+percent(c),0)/COURSES.length);document.getElementById('statCompleted').textContent=comp;document.getElementById('statProgress').textContent=total+'%';document.getElementById('statCerts').textContent=S.certs.length;updateManager()}
+function updateManager(){if(!S.user)return;let comp=COURSES.filter(isComplete).length,total=Math.round(COURSES.reduce((a,c)=>a+percent(c),0)/COURSES.length),docs=Object.values(S.docs).filter(Boolean).length;document.getElementById('mgrComplete').textContent=comp;document.getElementById('mgrDocs').textContent=docs+'/13';document.getElementById('mgrRate').textContent=total+'%';document.getElementById('mgrName').textContent=S.user.name;document.getElementById('mgrRole').textContent=S.user.role;document.getElementById('mgrCompleted').textContent=comp+' of '+COURSES.length;document.getElementById('mgrProgress').textContent=total+'%'}
+document.addEventListener('DOMContentLoaded',function(){
+ const btn=document.getElementById('enterPortalBtn');
+ if(btn) btn.addEventListener('click',signIn);
+ if(S.user) boot();
+});

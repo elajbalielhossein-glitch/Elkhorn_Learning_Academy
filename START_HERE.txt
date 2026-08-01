@@ -1,0 +1,11 @@
+ELKHORN LEARNING ACADEMY — DOCUMENTS FIXED
+
+1. Right-click the ZIP and choose Extract All.
+2. Open the extracted folder.
+3. Open index.html in Chrome or Edge.
+4. Sign in and open Documents.
+5. The four PDF files are embedded directly in the portal, so View PDF and Download PDF no longer depend on file paths.
+
+Admin login:
+Username: admin
+Password: Elkhorn2026!

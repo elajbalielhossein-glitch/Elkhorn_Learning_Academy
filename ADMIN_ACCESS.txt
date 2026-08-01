@@ -1,0 +1,16 @@
+ELKHORN LEARNING ACADEMY — ADMIN ACCESS
+
+Administrator username: admin
+Initial password: Elkhorn2026!
+
+Only accounts with the Admin role can:
+- Create users
+- Reset passwords
+- Disable or enable users
+- Delete users
+- View all employee training records
+- Export all training records
+
+Employees and Managers cannot access the Admin Dashboard or create users.
+
+IMPORTANT: This ZIP is a browser-based offline portal. Accounts and records are stored in that browser on that computer. For secure access across multiple devices, the portal must be hosted with a server and database.
